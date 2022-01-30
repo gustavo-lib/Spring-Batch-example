@@ -1,9 +1,15 @@
 package com.gortiz.batch.springbatch.config;
 
 
+import com.gortiz.batch.springbatch.listener.SpringBatchJobCompletionListener;
+import com.gortiz.batch.springbatch.listener.SpringBatchJobExecutionListener;
+import com.gortiz.batch.springbatch.listener.SpringBatchStepListener;
+import com.gortiz.batch.springbatch.model.StockInfo;
+import com.gortiz.batch.springbatch.step.StockInfoProcessor;
 import org.springframework.batch.core.Job;
 import org.springframework.batch.core.JobExecutionListener;
 import org.springframework.batch.core.Step;
+import org.springframework.batch.core.configuration.annotation.EnableBatchProcessing;
 import org.springframework.batch.core.configuration.annotation.JobBuilderFactory;
 import org.springframework.batch.core.configuration.annotation.StepBuilderFactory;
 import org.springframework.batch.core.launch.support.RunIdIncrementer;
@@ -18,7 +24,11 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.core.io.FileSystemResource;
 
+
+@Configuration
+@EnableBatchProcessing
 public class SpringBatchConfig {
+
     @Autowired
     public JobBuilderFactory jobBuilderFactory;
 

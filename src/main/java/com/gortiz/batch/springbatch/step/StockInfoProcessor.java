@@ -5,7 +5,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.batch.item.ItemProcessor;
 
-public class StockInfoProcessor  implements ItemProcessor<StockInfo, String> {
+import java.util.Date;
+
+public class StockInfoProcessor  implements ItemProcessor<StockInfo, String>  {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(StockInfoProcessor.class);
 

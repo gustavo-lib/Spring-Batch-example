@@ -1,18 +1,19 @@
 package com.gortiz.batch.springbatch.config;
 
 
+import ch.qos.logback.core.net.SyslogOutputStream;
 import com.gortiz.batch.springbatch.listener.SpringBatchJobCompletionListener;
 import com.gortiz.batch.springbatch.listener.SpringBatchJobExecutionListener;
 import com.gortiz.batch.springbatch.listener.SpringBatchStepListener;
 import com.gortiz.batch.springbatch.model.StockInfo;
 import com.gortiz.batch.springbatch.step.StockInfoProcessor;
-import org.springframework.batch.core.Job;
-import org.springframework.batch.core.JobExecutionListener;
-import org.springframework.batch.core.Step;
+import org.springframework.batch.core.*;
 import org.springframework.batch.core.configuration.annotation.EnableBatchProcessing;
 import org.springframework.batch.core.configuration.annotation.JobBuilderFactory;
 import org.springframework.batch.core.configuration.annotation.StepBuilderFactory;
 import org.springframework.batch.core.launch.support.RunIdIncrementer;
+import org.springframework.batch.core.scope.context.ChunkContext;
+import org.springframework.batch.core.step.tasklet.Tasklet;
 import org.springframework.batch.item.file.FlatFileItemReader;
 import org.springframework.batch.item.file.FlatFileItemWriter;
 import org.springframework.batch.item.file.builder.FlatFileItemReaderBuilder;
@@ -24,6 +25,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.core.io.FileSystemResource;
 
+import org.springframework.batch.repeat.RepeatStatus;
 
 @Configuration
 @EnableBatchProcessing
@@ -35,12 +37,18 @@ public class SpringBatchConfig {
     @Autowired
     public StepBuilderFactory stepBuilderFactory;
 
+    @Autowired
+    private StepBuilderFactory steps;
+
     @Bean
     public Job processJob() {
         return jobBuilderFactory.get("stockpricesinfojob")
                 .incrementer(new RunIdIncrementer())
                 .listener(new SpringBatchJobExecutionListener())
-                .flow(StockPricesInfoStep())
+                .start(StockPricesInfoStep())
+                .next(step2())
+                .next(conditionalStep1()).on(ExitStatus.FAILED.getExitCode()).to(conditionalStep3())
+                .from(conditionalStep1()).on("HOGE").to(conditionalStep4())
                 .end()
                 .build();
     }
@@ -89,4 +97,59 @@ public class SpringBatchConfig {
     public JobExecutionListener listener() {
         return new SpringBatchJobCompletionListener();
     }
+    //
+    @Bean
+    public Step step2() {
+        return steps.get("step2")
+                .tasklet((contribution, chunkContext) -> {
+                    System.out.println("HOLA ESTAMOS EN EL PASO step2");
+                    return RepeatStatus.FINISHED;
+                })
+                .build();
+    }
+
+    @Bean
+    public Step conditionalStep1() {
+        return steps.get("conditionalStep1")
+                .tasklet((contribution, chunkContext) -> {
+                    Object fail = chunkContext.getStepContext().getJobParameters().get("fail");
+                    if (fail instanceof String) {
+                        switch ((String) fail) {
+                            case "1":
+                                contribution.setExitStatus(ExitStatus.FAILED);
+                                break;
+                            case "2":
+                                contribution.setExitStatus(new ExitStatus("HOGE"));
+                                break;
+                        }
+                    }
+                    double valor = Math.floor(Math.random() * (1 - 0 + 1)) + 0;
+                    if(valor <= 0.5){
+                        contribution.setExitStatus(ExitStatus.FAILED);
+                    }
+                    else{
+                        contribution.setExitStatus(new ExitStatus("HOGE"));
+                    }
+                    return RepeatStatus.FINISHED;
+                }).build();
+    }
+
+    @Bean
+    public Step conditionalStep3() {
+        return steps.get("conditionalStep3")
+                .tasklet((contribution, chunkContext) -> {
+                    System.out.println("vfmdjskvnfjd");
+                    return RepeatStatus.FINISHED;
+                }).build();
+    }
+
+    @Bean
+    public Step conditionalStep4() {
+        return steps.get("conditionalStep4")
+                .tasklet((contribution, chunkContext) -> {
+                    System.out.println("conditionalStep4");
+                    return RepeatStatus.FINISHED;
+                }).build();
+    }
 }
+

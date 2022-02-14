@@ -17,6 +17,7 @@ public class StockInfoProcessor  implements ItemProcessor<StockInfo, String>  {
         String message = stockInfo.getStockName() + " is trading at  "
                 + stockInfo.getStockPrice() + " on " + stockInfo.getMarket()+" at "+ new Date().toString()+ "!";
         LOGGER.info("printing '{}' to output file", message);
+
         return message;
     }
 }

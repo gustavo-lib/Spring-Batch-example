@@ -11,6 +11,7 @@ import org.springframework.batch.core.*;
 import org.springframework.batch.core.configuration.annotation.EnableBatchProcessing;
 import org.springframework.batch.core.configuration.annotation.JobBuilderFactory;
 import org.springframework.batch.core.configuration.annotation.StepBuilderFactory;
+import org.springframework.batch.core.job.flow.JobExecutionDecider;
 import org.springframework.batch.core.launch.support.RunIdIncrementer;
 import org.springframework.batch.core.scope.context.ChunkContext;
 import org.springframework.batch.core.step.tasklet.Tasklet;
@@ -40,6 +41,10 @@ public class SpringBatchConfig {
     @Autowired
     private StepBuilderFactory steps;
 
+    @Autowired
+    private StepTwoDecider stepTwoDecider;
+
+
     @Bean
     public Job processJob() {
         return jobBuilderFactory.get("stockpricesinfojob")
@@ -49,6 +54,7 @@ public class SpringBatchConfig {
                 .next(step2())
                 .next(conditionalStep1()).on(ExitStatus.FAILED.getExitCode()).to(conditionalStep3())
                 .from(conditionalStep1()).on("HOGE").to(conditionalStep4())
+                .from(stepTwoDecider).on(ExitStatus.FAILED).to(step2())
                 .end()
                 .build();
     }
@@ -151,5 +157,7 @@ public class SpringBatchConfig {
                     return RepeatStatus.FINISHED;
                 }).build();
     }
+
+
 }
 
